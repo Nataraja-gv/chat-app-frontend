@@ -3,9 +3,9 @@ import React, { useReducer, useState } from "react";
 import Image from "next/image";
 import { reducer, Step1, Step2, Step3 } from "./reducerField";
 import { useSnackbar } from "notistack";
-import { signupAuth } from "@/services/auth";
+import { otpApi, otpApiVerify, signupAuth } from "@/services/auth";
 import { useRouter } from "next/navigation";
- 
+import OtpModel from "@/section/otpmodel";
 
 export const Signup = () => {
   const [step, setStep] = useState(1);
@@ -24,9 +24,26 @@ export const Signup = () => {
     photoUser: "",
     about: "",
   });
+  const [openModel, setOpenModel] = useState(false);
 
   const handleDispatchInput = (key, value) => {
     dispatch({ type: key, payload: value });
+  };
+
+  const handleOtpVerify = async (code) => {
+    try {
+      const res = await otpApiVerify(Number(code));
+      if (res) {
+        enqueueSnackbar("Register successful", { variant: "success" });
+        router.push("/");
+        return true; // ✅ verification success
+      }
+    } catch (error) {
+      enqueueSnackbar(error?.message || "OTP verification failed", {
+        variant: "error",
+      });
+      return false; // ❌ verification failed
+    }
   };
 
   const handleSubmit = async () => {
@@ -44,8 +61,17 @@ export const Signup = () => {
     try {
       const res = await signupAuth(formData);
       if (res) {
-        enqueueSnackbar("Register successful", { variant: "success" });
-        router.push("/")
+        const userId = res?.data?._id;
+        localStorage.setItem("userId", userId);
+        if (userId) {
+          const res = await otpApi(userId);
+          if (res) {
+            enqueueSnackbar("otp send successful to your Emailid", {
+              variant: "success",
+            });
+            setOpenModel(true);
+          }
+        }
       }
     } catch (error) {
       enqueueSnackbar(error?.message, { variant: "error" });
@@ -174,6 +200,13 @@ export const Signup = () => {
           </div>
         </div>
       </div>
+      {openModel && (
+        <OtpModel
+          open={openModel}
+          setOpen={setOpenModel}
+          handleOtpVerify={handleOtpVerify}
+        />
+      )}
     </div>
   );
 };
