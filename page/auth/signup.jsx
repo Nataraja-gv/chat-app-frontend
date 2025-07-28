@@ -2,9 +2,15 @@
 import React, { useReducer, useState } from "react";
 import Image from "next/image";
 import { reducer, Step1, Step2, Step3 } from "./reducerField";
+import { useSnackbar } from "notistack";
+import { signupAuth } from "@/services/auth";
+import { useRouter } from "next/navigation";
+ 
 
 export const Signup = () => {
   const [step, setStep] = useState(1);
+  const { enqueueSnackbar } = useSnackbar();
+  const router = useRouter();
 
   const steps = [
     { id: 1, label: "Personal Info" },
@@ -23,7 +29,45 @@ export const Signup = () => {
     dispatch({ type: key, payload: value });
   };
 
-  console.log(state, "state");
+  const handleSubmit = async () => {
+    if (!state?.photoUser) {
+      enqueueSnackbar("photo is required", { variant: "error" });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("fullName", state.fullName);
+    formData.append("email", state?.email);
+    formData.append("phone", state?.phone);
+    formData.append("about", state?.about);
+    formData.append("photoUser", state?.photoUser);
+    try {
+      const res = await signupAuth(formData);
+      if (res) {
+        enqueueSnackbar("Register successful", { variant: "success" });
+        router.push("/")
+      }
+    } catch (error) {
+      enqueueSnackbar(error?.message, { variant: "error" });
+    }
+  };
+
+  const handleStepField = (step) => {
+    if (step === 1) {
+      if (!state?.fullName || !state?.email || !state?.phone) {
+        enqueueSnackbar("All fields are required", { variant: "error" });
+      } else {
+        setStep(step + 1);
+      }
+    } else if (step === 2) {
+      if (!state?.about) {
+        enqueueSnackbar("About field is required", { variant: "error" });
+      } else {
+        setStep(step + 1);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-100 to-yellow-300 px-4 py-10">
       <div className="flex flex-col md:flex-row items-center w-full max-w-6xl bg-white/90 rounded-2xl shadow-2xl overflow-hidden p-6 md:p-10">
@@ -103,7 +147,7 @@ export const Signup = () => {
                   </button>
                 )}
                 <button
-                  onClick={() => setStep(step + 1)}
+                  onClick={() => handleStepField(step)}
                   className="px-6 py-2 bg-yellow-500 text-white rounded-lg shadow-md hover:bg-yellow-600 transition duration-300"
                 >
                   Continue
@@ -120,7 +164,7 @@ export const Signup = () => {
                   Back
                 </button>
                 <button
-                  // onClick={() => console.log("Submitting...", state)}
+                  onClick={handleSubmit}
                   className="px-6 py-2 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 transition duration-300"
                 >
                   Submit

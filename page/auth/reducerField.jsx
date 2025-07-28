@@ -109,7 +109,7 @@ export const Step3 = ({ state, dispatch }) => {
         htmlFor="dropzone-file"
         className="flex flex-col items-center justify-center w-full max-w-md h-72 border-2 border-dashed border-yellow-400 rounded-xl bg-yellow-50 hover:bg-yellow-100 transition duration-300 shadow-md cursor-pointer relative"
       >
-        {!selectedImages ? (
+        {!state?.photoUser ? (
           <>
             <div className="flex flex-col items-center justify-center pt-6 pb-6">
               <svg
@@ -137,7 +137,7 @@ export const Step3 = ({ state, dispatch }) => {
         ) : (
           <div className="relative">
             <Image
-              src={selectedImages}
+              src={selectedImages || URL.createObjectURL(state?.photoUser)}
               alt="Uploaded preview"
               width={160}
               height={160}
