@@ -87,3 +87,22 @@ export const otpApiVerify = async (code) => {
     });
   }
 };
+
+export const fecthuser = async () => {
+  const config = {
+    method: "GET",
+    maxBodyLength: Infinity,
+    url: "/backend/all/users",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+  try {
+    const res = await axios.request(config);
+    return res?.data;
+  } catch (error) {
+    enqueueSnackbar(error.response.data.message, {
+      variant: "error",
+    });
+  }
+};
