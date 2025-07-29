@@ -48,7 +48,7 @@ export const LoginPage = () => {
       const res = await otpApiVerify(Number(code));
       if (res) {
         enqueueSnackbar("login successful", { variant: "success" });
-        router.push("/");
+        router.push("/home");
         return true; // ✅ verification success
       }
     } catch (error) {

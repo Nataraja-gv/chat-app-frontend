@@ -35,7 +35,7 @@ export const Signup = () => {
       const res = await otpApiVerify(Number(code));
       if (res) {
         enqueueSnackbar("Register successful", { variant: "success" });
-        router.push("/");
+        router.push("/home");
         return true; // ✅ verification success
       }
     } catch (error) {
