@@ -105,7 +105,13 @@ export const Signup = () => {
             width={180}
             height={180}
             className="mb-4"
-          />
+          />{" "}
+          <p className="text-sm text-black text-center mt-4">
+            Already have an account?{" "}
+            <a href="/login" className="text-yellow-900 underline">
+              Login here
+            </a>
+          </p>
         </div>
 
         {/* Right Side */}

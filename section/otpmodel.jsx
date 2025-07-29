@@ -1,10 +1,38 @@
 "use client";
 
-import React, { useState } from "react";
+import { otpApi } from "@/services/auth";
+import { useSnackbar } from "notistack";
+import React, { useEffect, useState } from "react";
 
 const OtpModal = ({ open, setOpen, handleOtpVerify }) => {
   const [otpCode, setOtpCode] = useState(null);
+  const [resendTimer, setResendTimer] = useState(0);
   if (!open) return null;
+  const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    let timer;
+    if (resendTimer > 0) {
+      timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendTimer]);
+
+  const handleResendOTP = async () => {
+    if (resendTimer > 0) return;
+    try {
+      const userId = localStorage.getItem("userId");
+      const res = await otpApi(userId);
+      if (res) {
+        setResendTimer(30);
+        enqueueSnackbar("otp send successful to your Emailid", {
+          variant: "success",
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div
@@ -63,14 +91,28 @@ const OtpModal = ({ open, setOpen, handleOtpVerify }) => {
                   required
                 />
               </div>
+              <div className="">
+                <h1
+                  onClick={handleResendOTP}
+                  className={`text-end capitalize cursor-pointer ${
+                    resendTimer > 0
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-yellow-600 hover:underline"
+                  }`}
+                >
+                   {resendTimer > 0
+                    ? `Resend OTP in ${resendTimer}s`
+                    : "Resend OTP"}
+                </h1>
+              </div>
 
               <button
                 type="submit"
                 onClick={async (e) => {
-                  e.preventDefault();  
+                  e.preventDefault();
                   const success = await handleOtpVerify(otpCode);
                   if (success) {
-                    setOpen(false); // 
+                    setOpen(false); //
                   }
                 }}
                 className="w-full text-white bg-yellow-500 hover:bg-yellow-600 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800"

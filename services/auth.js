@@ -21,6 +21,26 @@ export const signupAuth = async (data) => {
   }
 };
 
+export const LoginAuth = async (data) => {
+  const config = {
+    method: "POST",
+    maxBodyLength: Infinity,
+    url: "/backend/user/login",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data,
+  };
+  try {
+    const res = await axios.request(config);
+    return res?.data;
+  } catch (error) {
+    enqueueSnackbar(error.response.data.message, {
+      variant: "error",
+    });
+  }
+};
+
 export const otpApi = async (userId) => {
   const config = {
     method: "POST",
