@@ -1,6 +1,8 @@
 "use client";
 import { BASE_URL } from "@/config";
 import { fecthuser, logout } from "@/services/auth";
+import { fecthuserChats } from "@/services/chat";
+import dayjs from "dayjs";
 import { EllipsisVertical, Search, SendHorizontal } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -18,6 +20,8 @@ const HomePage = () => {
   const router = useRouter();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
+  const userId = localStorage?.getItem("userId");
+  const targetUser = selectedUser;
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -46,25 +50,47 @@ const HomePage = () => {
     }
   };
   useEffect(() => {
-    socket.on("recived_msg", ({ input, fromUser }) => {
-      setMessages((prev) => [...prev, { input, fromUser }]);
+    socket.on("recived_msg", ({ text, fromUser, dateTime }) => {
+      setMessages((prev) => [...prev, { text, fromUser, dateTime }]);
     });
-  },[]);
+  }, []);
+
+  useEffect(() => {
+    if (userId && targetUser) {
+      socket.emit("join room", { fromUser: userId, targetUser });
+    }
+  }, [userId, targetUser]);
 
   const handleMessage = () => {
-    const userId = localStorage.getItem("userId");
     if (input.trimStart()) {
       socket.emit("join room", { fromUser: userId, targetUser: selectedUser });
       socket.emit("chat_msg", {
         fromUser: userId,
         targetUser: selectedUser,
-        input,
+        text: input,
       });
     }
     setInput("");
   };
 
-   console.log(messages,"messages")
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        const res = await fecthuserChats(targetUser);
+        const newMessgaes = res?.messages?.map((msg) => {
+          return {
+            fromUser: msg?.sender,
+            text: msg?.text,
+            dateTime: msg?.createdAt,
+          };
+        });
+        setMessages(newMessgaes);
+      } catch (error) {
+        console.log(error?.message);
+      }
+    };
+    fetchChats();
+  }, [selectedUser]);
   return (
     <div className="min-h-screen bg-yellow-400 text-white flex items-center justify-center p-4">
       <div className="grid grid-cols-12 w-full max-w-[1400px] h-[700px] border border-yellow-900 rounded-2xl overflow-hidden shadow-xl">
@@ -123,8 +149,8 @@ const HomePage = () => {
         </div>
 
         {/* Middle Chat Window */}
-        <div className="col-span-6 bg-gradient-to-tr from-yellow-200 via-white to-yellow-100  flex flex-col relative  ">
-          <div className="flex  items-center gap-4 bg-amber-300 p-3 border-b-2 border-yellow-950  shadow-2xl">
+        <div className="col-span-6 bg-gradient-to-tr from-yellow-200 via-white to-yellow-100  flex flex-col relative h-screen overflow-hidden  ">
+          <div className="flex  items-center absolute top-0 w-full gap-4 bg-amber-300 p-3 border-b-2 border-yellow-950  shadow-2xl">
             <div className="w-12 h-12 rounded-full overflow-hidden border border-yellow-700 bg-yellow-700 ">
               <img
                 src={
@@ -138,6 +164,32 @@ const HomePage = () => {
             <h1 className="text-black capitalize font-bold">
               {selected_user?.fullName}
             </h1>
+          </div>
+          <div className="flex-1   p-4 space-y-2 flex flex-col overflow-y-scroll mt-[80px] mb-[100px]">
+            {messages?.map((msg, i) => {
+              const isOwn = msg?.fromUser === userId;
+
+              return (
+                <div
+                  key={i}
+                  className={`flex ${isOwn ? "justify-end" : "justify-start"} `}
+                >
+                  <div
+                    className={`px-4 py-2 rounded-2xl text-sm max-w-xs break-words shadow relative ${
+                      isOwn
+                        ? "bg-yellow-500 text-white rounded-br-none"
+                        : "bg-gray-200 text-black rounded-bl-none"
+                    }`}
+                  >
+                    <div>{msg?.text}</div>
+                    <div className="text-[10px] mt-1 text-right opacity-70">
+                      {/* {dayjs(msg?.chattime).format("hh:mm A")} */}
+                      {dayjs(msg?.dateTime).format("hh:mm A")}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
           <div className="border-t border-gray-200 p-3 flex gap-2 absolute bottom-0 w-full bg-yellow-900 ">
             <input
