@@ -1,17 +1,23 @@
 "use client";
+import { BASE_URL } from "@/config";
 import { fecthuser, logout } from "@/services/auth";
-import { EllipsisVertical, Search } from "lucide-react";
+import { EllipsisVertical, Search, SendHorizontal } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
- 
+
 import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
+import { io } from "socket.io-client";
+
+const socket = io(BASE_URL);
 
 const HomePage = () => {
   const [user, setUser] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
   const router = useRouter();
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -39,6 +45,26 @@ const HomePage = () => {
       console.log(error?.message);
     }
   };
+  useEffect(() => {
+    socket.on("recived_msg", ({ input, fromUser }) => {
+      setMessages((prev) => [...prev, { input, fromUser }]);
+    });
+  },[]);
+
+  const handleMessage = () => {
+    const userId = localStorage.getItem("userId");
+    if (input.trimStart()) {
+      socket.emit("join room", { fromUser: userId, targetUser: selectedUser });
+      socket.emit("chat_msg", {
+        fromUser: userId,
+        targetUser: selectedUser,
+        input,
+      });
+    }
+    setInput("");
+  };
+
+   console.log(messages,"messages")
   return (
     <div className="min-h-screen bg-yellow-400 text-white flex items-center justify-center p-4">
       <div className="grid grid-cols-12 w-full max-w-[1400px] h-[700px] border border-yellow-900 rounded-2xl overflow-hidden shadow-xl">
@@ -97,7 +123,7 @@ const HomePage = () => {
         </div>
 
         {/* Middle Chat Window */}
-        <div className="col-span-6 bg-gradient-to-tr from-yellow-200 via-white to-yellow-100  flex flex-col  ">
+        <div className="col-span-6 bg-gradient-to-tr from-yellow-200 via-white to-yellow-100  flex flex-col relative  ">
           <div className="flex  items-center gap-4 bg-amber-300 p-3 border-b-2 border-yellow-950  shadow-2xl">
             <div className="w-12 h-12 rounded-full overflow-hidden border border-yellow-700 bg-yellow-700 ">
               <img
@@ -112,6 +138,21 @@ const HomePage = () => {
             <h1 className="text-black capitalize font-bold">
               {selected_user?.fullName}
             </h1>
+          </div>
+          <div className="border-t border-gray-200 p-3 flex gap-2 absolute bottom-0 w-full bg-yellow-900 ">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type a message..."
+              className="flex-1 px-4 py-2 border rounded-xl focus:outline-none bg-white text-black focus:ring-2 focus:ring-yellow-400 shadow-sm placeholder:text-amber-300"
+            />
+            <button
+              onClick={handleMessage}
+              className="p-3 bg-yellow-500 hover:bg-yellow-600 rounded-full transition text-white shadow-lg cursor-pointer"
+            >
+              <SendHorizontal size={20} strokeWidth={2.5} />
+            </button>
           </div>
         </div>
 
