@@ -22,6 +22,17 @@ const HomePage = () => {
   const [messages, setMessages] = useState([]);
   const userId = localStorage?.getItem("userId");
   const targetUser = selectedUser;
+  const [onlineUsers, setOnlineUsers] = useState([]);
+
+  useEffect(() => {
+    if (userId) {
+      socket.emit("active_users", userId);
+    }
+
+    socket.on("active_online_users", (users) => {
+      setOnlineUsers(users);
+    });
+  }, [userId]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -42,6 +53,9 @@ const HomePage = () => {
     try {
       const res = await logout();
       if (res) {
+        if (socket) {
+          socket.emit("users_logout", userId);
+        }
         enqueueSnackbar("logout sucessfully", { variant: "success" });
         router.push("/");
       }
@@ -91,6 +105,7 @@ const HomePage = () => {
     };
     fetchChats();
   }, [selectedUser]);
+
   return (
     <div className="min-h-screen bg-yellow-400 text-white flex items-center justify-center p-4">
       <div className="grid grid-cols-12 w-full max-w-[1400px] h-[700px] border border-yellow-900 rounded-2xl overflow-hidden shadow-xl">
@@ -140,7 +155,15 @@ const HomePage = () => {
                     <span className="text-[15px] font-semibold capitalize">
                       {user?.fullName}
                     </span>
-                    {/* <span className="text-xs text-gray-400">Offline</span> */}
+                    <span className="text-xs">
+                       {" "}
+                      {onlineUsers.includes(user?._id) ? (
+                        <span className="text-green-300">Online</span>
+                      ) : (
+                        <span className="text-gray-400">Offline</span>
+                      )}
+                       {" "}
+                    </span>
                   </div>
                 </div>
               </div>
