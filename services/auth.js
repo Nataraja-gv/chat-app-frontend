@@ -107,13 +107,30 @@ export const fecthuser = async () => {
   }
 };
 
-
-
 export const logout = async () => {
   const config = {
     method: "POST",
     maxBodyLength: Infinity,
     url: "/backend/user/logout",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+  try {
+    const res = await axios.request(config);
+    return res?.data;
+  } catch (error) {
+    enqueueSnackbar(error.response.data.message, {
+      variant: "error",
+    });
+  }
+};
+
+export const userProfile = async () => {
+  const config = {
+    method: "GET",
+    maxBodyLength: Infinity,
+    url: "/backend/user/profile",
     headers: {
       "Content-Type": "application/json",
     },

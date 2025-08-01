@@ -5,7 +5,7 @@ import { fecthuserChats } from "@/services/chat";
 import dayjs from "dayjs";
 import { EllipsisVertical, Search, SendHorizontal } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
@@ -15,13 +15,14 @@ const socket = io(BASE_URL);
 
 const HomePage = () => {
   const [user, setUser] = useState([]);
+  const { _id } = useParams();
   const [selectedUser, setSelectedUser] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
   const router = useRouter();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const userId = localStorage?.getItem("userId");
-  const targetUser = selectedUser;
+  const targetUser = _id || selectedUser;
   const [onlineUsers, setOnlineUsers] = useState([]);
 
   useEffect(() => {
@@ -104,7 +105,11 @@ const HomePage = () => {
       }
     };
     fetchChats();
-  }, [selectedUser]);
+  }, [_id, selectedUser]);
+
+  useEffect(() => {
+    setSelectedUser(_id || user?.[0]?._id);
+  }, [_id, user]);
 
   return (
     <div className="min-h-screen bg-yellow-400 text-white flex items-center justify-center p-4">
@@ -119,7 +124,7 @@ const HomePage = () => {
               width={80}
               height={80}
             />
-            <EllipsisVertical color="black" />
+            <EllipsisVertical color="black" className=" cursor-pointer" />
           </div>
 
           {/* Search Bar */}
@@ -137,8 +142,13 @@ const HomePage = () => {
             {user?.map((user, index) => (
               <div
                 key={index}
-                onClick={() => setSelectedUser(user?._id)}
-                className="flex items-center justify-between px-4 py-2 rounded-3xl bg-gradient-to-tl from-yellow-400  to-yellow-900 hover:from-yellow-800/50 hover:to-yellow-900/50 transition-all duration-200 cursor-pointer"
+                onClick={() => {
+                  setSelectedUser(user?._id);
+                  router.push(`/home/${user?._id}`);
+                }}
+                className={`flex items-center justify-between px-4 py-2 rounded-3xl bg-gradient-to-tl from-yellow-400  to-yellow-900 hover:from-yellow-800/50 hover:to-yellow-900/50 transition-all duration-200 cursor-pointer ${
+                  selectedUser === user?._id ? "border border-white" : ""
+                }`}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full overflow-hidden border border-yellow-700 bg-yellow-700">
