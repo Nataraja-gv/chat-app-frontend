@@ -144,3 +144,23 @@ export const userProfile = async () => {
     });
   }
 };
+
+export const updateProfile = async (data) => {
+  const config = {
+    method: "PATCH",
+    maxBodyLength: Infinity,
+    url: "/backend/user/profile/update",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data,
+  };
+  try {
+    const res = await axios.request(config);
+    return res?.data;
+  } catch (error) {
+    enqueueSnackbar(error.response.data.message, {
+      variant: "error",
+    });
+  }
+};

@@ -24,6 +24,7 @@ const HomePage = () => {
   const userId = localStorage?.getItem("userId");
   const targetUser = _id || selectedUser;
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [dropDown, setDropDown] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -124,7 +125,24 @@ const HomePage = () => {
               width={80}
               height={80}
             />
-            <EllipsisVertical color="black" className=" cursor-pointer" />
+            <div className="relative">
+              <EllipsisVertical
+                color="black"
+                className="cursor-pointer"
+                onClick={() => setDropDown(!dropDown)}
+              />
+
+              {dropDown && (
+                <div className="absolute right-0 mt-2 bg-white rounded shadow ">
+                  <button
+                    className="text-black hover:bg-yellow-100 px-4 py-2 rounded  font-semibold"
+                    onClick={() => router.push("/profile")}
+                  >
+                    Profile
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Search Bar */}
